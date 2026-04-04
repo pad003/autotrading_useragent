@@ -2,6 +2,9 @@
 Agent 환경변수 설정
 """
 
+import os
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +19,13 @@ class AgentSettings(BaseSettings):
 
     # 추천인 코드 (파트너의 Bitget UID — 에이전트 등록 시 필수)
     partner_code: str = ""
+
+    @model_validator(mode="after")
+    def fallback_referral_code(self):
+        """PARTNER_CODE 미설정 시 구버전 REFERRAL_CODE 환경변수로 폴백 (하위 호환)"""
+        if not self.partner_code:
+            self.partner_code = os.getenv("REFERRAL_CODE", "")
+        return self
 
     # Agent 인증 (형식: {supabase_user_id}:{32바이트_hex})
     agent_token: str              # 앱에서 발급받은 토큰
